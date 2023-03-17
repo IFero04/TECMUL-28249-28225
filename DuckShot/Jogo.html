@@ -1,0 +1,231 @@
+<!doctype html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8" />
+    <title>DuckShot</title>
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<script type="text/javascript">
+
+var config = {
+    type: Phaser.AUTO,
+    width: 640,
+    height: 480,
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 0},
+            debug: true
+        }
+    },
+    scene: {
+        preload: preload,
+        create: create,
+        update: update,
+        render: render
+    }
+};
+
+var game = new Phaser.Game(config);
+
+function preload ()
+{
+    this.load.image('sky', 'assets/background.png');
+    this.load.image('ground', 'assets/grass.png');
+    this.load.image('poles', 'assets/poles.png');
+    this.load.image('sling', 'assets/slingshot.png');
+    this.load.image('rock', 'assets/rock.png');
+    this.load.image('bird', 'assets/Bird.png');
+    this.load.image('box', 'assets/box.png');
+
+}
+
+var weapon;
+var bullets;
+var enemies;
+var blocks;
+var cursors;
+var speed;
+var level = 1;
+var text;
+
+function create ()
+{
+    //Background
+    this.add.image(320,240, 'sky');
+    this.add.image(320,240, 'poles');
+    this.add.image(320,240, 'ground');
+
+    
+    // Player //
+    weapon = this.physics.add.image(320, 430, 'sling');
+    weapon.setCollideWorldBounds(true);
+    cursors = this.input.keyboard.createCursorKeys();
+    speed = Phaser.Math.GetSpeed(300, 1);
+
+
+    // Bullet //
+    var Bullet = new Phaser.Class({
+
+        Extends: Phaser.GameObjects.Image,
+
+        initialize:
+
+        function Bullet (scene)
+        {
+            Phaser.GameObjects.Image.call(this, scene, 0, 0, 'rock');
+            this.speed = Phaser.Math.GetSpeed(400, 1);
+        },
+
+        fire: function (x, y)
+        {
+            this.setPosition(x, y -28);
+
+            this.setActive(true);
+            this.setVisible(true);
+        },
+        
+        changeY: function (x, y)
+        {
+            this.speed = this.speed * (-1);
+        },
+        
+        
+        update: function (time, delta)
+        {
+            this.y -= this.speed * delta;
+
+            if (this.y < -50)
+            {
+                this.setActive(false);
+                this.setVisible(false);
+            }
+            else if (this.y > 500)
+            {
+                this.setActive(false);
+                this.setVisible(false);
+                this.changeY()
+            }
+        }
+        
+    });
+
+    bullets = this.physics.add.group({
+        classType: Bullet,
+        maxSize: 1,
+        runChildUpdate: true
+    });
+
+    
+    // Enemies
+    enemies = this.physics.add.group({
+        key: 'bird',
+        repeat: 1,
+        setXY: { x: 320, y: 200}
+    })
+
+
+    // Obstacle
+    blocks = this.physics.add.staticGroup();
+    blocks.create(100, 200, 'box');
+
+    
+    // Physics
+    this.physics.add.collider(bullets, blocks, hitBlock);
+    this.physics.add.collider(bullets, enemies, hitEnemy, null, this);
+    this.physics.add.collider(bullets, weapon, hitWeapon);
+
+     // text
+     text = this.add.text(16, 16, 'text: ', { fontSize: '16px', fill: '#00ff00' });
+}
+
+function update (time, delta)
+{
+    if (cursors.left.isDown)
+    {
+        weapon.x -= speed * delta;
+        text.setText('text: MOVE');
+    }
+    else if (cursors.right.isDown)
+    {
+        weapon.x += speed * delta;
+        text.setText('text: MOVE');
+    }
+
+    if (cursors.up.isDown)
+    {
+        var bullet = bullets.get();
+
+        if (bullet)
+        {
+            bullet.fire(weapon.x, weapon.y);
+            text.setText('text: SHOOT');
+        }
+    }
+  
+    if (Phaser.Input.Keyboard.KeyCodes.SPACE.isDown)
+    {
+        var bullet = bullets.get();
+
+        if (bullet)
+        {
+            bullet.fire(weapon.x, weapon.y);
+            text.setText('text: SHOOT');
+        }
+    }
+    
+}
+
+function render() 
+{
+    weapon.debug();
+}
+
+function hitEnemy (bullets, enemy)
+{
+    enemy.disableBody(true, true);
+    text.setText('text: HIT');
+
+    if(enemies.countActive(true) == 0)
+    {
+        level += 1;
+        text.setText('text: Level - ' + level);
+        
+        /*
+        enemies.children.iterate(function (child) {
+            child.enableBody(true, child.x, child.y, true, true);
+        });
+        */
+    }
+
+}
+
+function hitBlock (bullet, block)
+{
+    bullet.changeY();
+    text.setText('text: Ricochet Speed: ' + bullet.speed);
+}
+
+function hitWeapon(bullet, weapon)
+{
+    text.setText('text: Catch Speed: ' + bullet.speed);
+
+    if(bullet.speed < 0) {
+        bullet.changeY();
+        bullet.x = weapon.x;
+        bullet.y = weapon.y - 28;
+    }
+}
+
+
+</script>
+
+</body>
+</html>
