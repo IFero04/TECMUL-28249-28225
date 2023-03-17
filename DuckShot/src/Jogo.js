@@ -44,7 +44,9 @@ var bullet;
 
 var enemies;
 var blocks;
+var portals;
 var hit = false;
+var direction = 1;
 
 
 // CREATE //
@@ -58,7 +60,7 @@ function create ()
     this.add.image(320,240, 'ground');
 
     // PLAYER //
-    weapon = this.physics.add.image(320, 430, 'sling');
+    weapon = this.physics.add.image(320, 450, 'sling');
     weapon.setCollideWorldBounds(true);
     cursors = this.input.keyboard.createCursorKeys();
     speed = Phaser.Math.GetSpeed(300, 1);
@@ -74,9 +76,13 @@ function create ()
     // OBSTACLE
     blocks = this.physics.add.staticGroup();
 
+    // PORTALS //
+    portals = this.physics.add.staticGroup();
+
     // PHYSICS
     this.physics.add.collider(bullet, enemies, hitEnemy);
     this.physics.add.collider(bullet, blocks, hitBox);
+    this.physics.add.collider(bullet, portals, hitPortal);
     this.physics.add.collider(bullet, weapon, catchRock);
     
 
@@ -120,8 +126,12 @@ function update (time, delta)
 function loadLevel(level)
 {
     if (level == 0) {
-        enemies.create(320,200, 'bird');
-        blocks.create(100, 200, 'box');
+        enemies.create(320, 150, 'bird');
+        enemies.create(400, 150, 'bird');
+        enemies.create(100, 350, 'bird');
+        blocks.create(100, 150, 'box');
+        portals.create(320, 70);
+
     }
 }
 
@@ -133,6 +143,8 @@ function reset(level)
     bullet.setVisible(true);
     bullet.setX(weapon.x);
     bullet.setY(weapon.y -28);
+    direction = 1;
+    hit = false;
 }
 
 function checkBulletOutOfBounds()
@@ -146,24 +158,36 @@ function checkBulletOutOfBounds()
 function hitEnemy(bullet, enemy) 
 {
     enemy.disableBody(true, true);
-    bullet.setVelocityY(-400);
+    if(direction == 1) {
+        bullet.setVelocityY(-400);
+    }else {
+        bullet.setVelocityY(400);
+    }
+    
 }
 
 function hitBox(bullet, box)
 {
     bullet.setVelocityY(400);
     hit = true;
+    direction = -1;
+}
+
+function hitPortal(bullet, portal)
+{
+    bullet.setX(100);
+    bullet.setY(150);
+    bullet.setVelocityY(400);
+    hit = true;
+    direction = -1;
 }
 
 function catchRock(bullet, weapon)
 {
     if(hit) {
-        weapon.setActive(false);
-        bullet.disableBody(true, true);
-        bullet.setVisible(true);
-        weapon.setY(430);
+        bullet.setActive(false);
         bullet.setX(weapon.x);
         bullet.setY(weapon.y -28);
-        weapon.setActive(true);
+        direction = 1;
     }
 }
