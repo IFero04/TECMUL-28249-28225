@@ -1,0 +1,126 @@
+<!doctype html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8" />
+    <title>DuckShot</title>
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<script type="text/javascript">
+
+var config = {
+    type: Phaser.AUTO,
+    width: 640,
+    height: 480,
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 0},
+            debug: true
+        }
+    },
+    scene: {
+        preload: preload,
+        create: create,
+        update: update,
+    }
+};
+
+var game = new Phaser.Game(config);
+
+function preload ()
+{
+    this.load.image('sky', 'assets/background.png');
+    this.load.image('ground', 'assets/grass.png');
+    this.load.image('poles', 'assets/poles.png');
+    this.load.image('sling', 'assets/slingshot.png');
+    this.load.image('rock', 'assets/rock.png');
+    this.load.image('box', 'assets/box.png');
+}
+
+var weapon;
+var bullet;
+var hasBullet = true;
+var blocks;
+var cursors;
+var shots = 0;
+var level = 1;
+var text;
+
+function create ()
+{
+    //Background
+    this.add.image(320,240, 'sky');
+    this.add.image(320,240, 'poles');
+    this.add.image(320,240, 'ground');
+
+    
+    // Player //
+    weapon = this.physics.add.image(320, 430, 'sling');
+    weapon.setCollideWorldBounds(true);
+    cursors = this.input.keyboard.createCursorKeys();
+
+
+    // Bullet //
+    bullet = this.physics.add.image(weapon.x, weapon.y - 28, 'rock');
+
+    
+
+    
+    // Obstacle
+    blocks = this.physics.add.staticGroup();
+    blocks.create(100, 200, 'box');
+
+    
+    // Physics
+    this.physics.add.collider(bullet, blocks, hitBlock);
+
+    // text
+    text = this.add.text(60, 16, 'Shots: 0', { fontSize: '16px', fill: '#00ff00' });
+    
+}
+
+function update ()
+{
+    // PLAYER MOVEMENT
+    if (cursors.left.isDown)
+    {
+        weapon.x -= 5;
+        if (hasBullet) {
+            bullet.x -= 5;
+        }
+    }
+    else if (cursors.right.isDown)
+    {
+        weapon.x += 5;
+        if (hasBullet) {
+            bullet.x +=5;
+        }
+    }
+
+
+    // SHOTING
+    if (hasBullet && cursors.up.isDown) 
+    {
+        hasBullet = false;
+        bullet.setVelocityY(-300);
+    }
+}
+
+
+function hitBlock (bullet, block)
+{
+    bullet.setVelocityX(bullet.body.velocity.x * -1);
+    bullet.setVelocityY(-300);
+}
+
+
+</script>
+</body>
+</html>

@@ -29,6 +29,7 @@ var config = {
         preload: preload,
         create: create,
         update: update,
+        render: render
     }
 };
 
@@ -46,6 +47,8 @@ function preload ()
 }
 
 var weapon;
+var hasBullet = true;
+var direction = 1;
 var bullets;
 var enemies;
 var blocks;
@@ -93,6 +96,7 @@ function create ()
         
         changeY: function ()
         {
+            //direction = direction * (-1);
             this.speed = this.speed * (-1);
         },
         
@@ -148,6 +152,7 @@ function create ()
 
 function update (time, delta)
 {
+    // PLAYER MOVEMENT
     if (cursors.left.isDown)
     {
         weapon.x -= speed * delta;
@@ -159,17 +164,28 @@ function update (time, delta)
         text.setText('text: MOVE');
     }
 
+
+    // SHOTING
     if (cursors.up.isDown)
     {
-        var bullet = bullets.get();
+        if(hasBullet) {
+            var bullet = bullets.get();
 
-        if (bullet)
-        {
-            shots += 1;
-            text.setText('Shots: ' + shots);
-            bullet.fire(weapon.x, weapon.y);
+            if (bullet)
+            {
+                shots += 1;
+                hasBullet = false;
+                text.setText('Shots: ' + shots);
+                bullet.fire(weapon.x, weapon.y);
+            }
         }
+        console.log(bullets);
     }
+}
+
+function render() 
+{
+    weapon.debug();
 }
 
 function hitEnemy (bullets, enemy)
@@ -193,22 +209,23 @@ function hitEnemy (bullets, enemy)
 
 function hitBlock (bullet, block)
 {
-    console.log('text: Ricochet Speed: ' + bullet.speed);
+    console.log('Ricochet Speed: ' + bullet.speed);
     bullet.changeY();
-    console.log('text: Ricochet Speed: ' + bullet.speed);
+    console.log('Ricochet Speed: ' + bullet.speed);
 }
 
 function hitWeapon(bullet, weapon)
 {
-    console.log('text: Catch Speed: ' + bullet.speed);
-    
-
-    if(bullet.speed < 0) {
-        
+    console.log('Catch Speed: ' + bullet.speed);
+    /*
+    if(direction = -1) {
+        console.log('Teste');
         bullet.changeY();
         bullet.x = weapon.x;
         bullet.y = weapon.y - 28;
+        hasBullet = true;
     }
+    */
 }
 
 
