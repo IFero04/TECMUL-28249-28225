@@ -29,13 +29,18 @@ function preload ()
     this.load.image('sling', 'assets/slingshot.png');
     this.load.image('rock', 'assets/rock.png');
     this.load.image('bird', 'assets/Bird.png');
-    this.load.image('box', 'assets/box.png');
+    this.load.image('box', 'assets/box.png');~
+    this.load.image('portalTeste', 'assets/portal_sprite')
+    this.load.image('portal-entry', 'assets/portal.png');
+    this.load.image('portal-exit', 'assets/portal.png');
 }
 
 
 // VARIABLES //
-var currentlevel = 0;
+var currentlevel = 99;
+var textLevel;
 var shots = 0;
+var textShots;
 
 var weapon;
 var cursors;
@@ -45,6 +50,7 @@ var bullet;
 var enemies;
 var blocks;
 var portals;
+var sparks;
 var hit = false;
 var direction = 1;
 
@@ -52,7 +58,12 @@ var direction = 1;
 // CREATE //
 function create ()
 {
-    
+    // Teste //
+    var combo = this.input.keyboard.createCombo([ 38, 38, 40, 40, 37, 39, 37, 39, 'B', 'A', 'B', 'A' ], { resetOnMatch: true });
+    this.input.keyboard.on('keycombomatch', function (event) {
+        
+        console.log('Konami Code entered!');
+    });
 
     // BACKGROUND //
     this.add.image(320,240, 'sky');
@@ -77,14 +88,21 @@ function create ()
     blocks = this.physics.add.staticGroup();
 
     // PORTALS //
-    portals = this.physics.add.staticGroup();
+    portals = this.physics.add.group();
+
+    // DEADLY // 
+    sparks = this.physics.add.group();
 
     // PHYSICS
     this.physics.add.collider(bullet, enemies, hitEnemy);
     this.physics.add.collider(bullet, blocks, hitBox);
     this.physics.add.collider(bullet, portals, hitPortal);
     this.physics.add.collider(bullet, weapon, catchRock);
+    this.physics.add.collider(bullet, sparks, killBullet);
     
+    // UI
+    textLevel = this.add.text(25, 445, 'Level: 1', { fontSize: '24px', fill: '#FF0000' });
+    textShots = this.add.text(510, 445, 'Shots: 0', { fontSize: '24px', fill: '#FF0000' });
 
     // START GAME //
     loadLevel(currentlevel);
@@ -99,14 +117,14 @@ function update (time, delta)
     {
         weapon.x -= speed * delta;
         if(bullet.visible && bullet.active == false) {
-            bullet.x -= speed * delta;
+            bullet.x = weapon.x;
         }
     }
     else if (cursors.right.isDown)
     {
         weapon.x += speed * delta;
         if(bullet.visible && bullet.active == false) {
-            bullet.x += speed * delta;
+            bullet.x = weapon.x;
         }
     }
 
@@ -115,30 +133,85 @@ function update (time, delta)
     {
         hit = false
         shots += 1;
+        textShots.setText('Shots: ' + shots);
         bullet.enableBody(true, weapon.x, weapon.y-28, true, true);
         bullet.setVelocityY(-400);
     }
 
     // Check if bullet is out of bounds
     checkBulletOutOfBounds();
+
+    // Check Victory
+    checkVictory();
+
+    // Animation
+
+   
 }
 
 function loadLevel(level)
 {
-    if (level == 0) {
-        enemies.create(320, 150, 'bird');
-        enemies.create(400, 150, 'bird');
-        enemies.create(100, 350, 'bird');
-        blocks.create(100, 150, 'box');
-        portals.create(320, 70);
+    textLevel.setText('Level: ' + level);
+    if (level == 1) {
+        enemies.create(320, 100, 'bird');
+        enemies.create(320, 200, 'bird');
+    }
+
+    if (level == 2) {
+        enemies.create(220, 150, 'bird');
+        
+    }
+
+    if (level == 3) {
+        enemies.create(220, 150, 'bird');
+    }
+
+    if (level == 4) {
+        enemies.create(220, 100, 'bird');
+        blocks.create(420,100,'box');
+        enemies.create(420, 200, 'bird');
+        
+    }
+
+    if (level == 5) {
+        blocks.create(140, 100, 'box');
+        enemies.create(140, 200, 'bird');
+        enemies.create(140, 300, 'bird');
+
+        enemies.create(320, 200, 'bird');
+        enemies.create(320, 300, 'bird');
+        
+        blocks.create(500,100,'box');
+        enemies.create(500, 200, 'bird');
+        enemies.create(500, 300, 'bird');
+    }
+
+    // Teste Level
+    if (level >= 99) {
+        blocks.create(140, 100, 'box');
+        enemies.create(140, 200, 'bird');
+        
+        enemies.create(140, 300, 'bird');
+       
+        enemies.create(320, 100, 'bird');
+        portals.create(320,200, 'portal-exit')
+        portals.create(320,300, 'portal-entry')
+
+        sparks.create(500,100);
+        enemies.create(500, 200, 'bird');
+        enemies.create(500, 300, 'bird');
 
     }
+
+    
 }
 
 function reset(level)
 {   
     enemies.clear(true,true);
     blocks.clear(true, true);
+    portals.clear(true, true);
+    sparks.clear(true,true);
     loadLevel(level);
     bullet.setVisible(true);
     bullet.setX(weapon.x);
@@ -147,11 +220,25 @@ function reset(level)
     hit = false;
 }
 
+function killBullet()
+{
+    bullet.disableBody(true, true);
+    reset(currentlevel);
+}
+
 function checkBulletOutOfBounds()
 {
     if(bullet.y < -50 || bullet.y > game.config.height + 50) {
+        killBullet();
+    }
+}
+
+function checkVictory()
+{
+    if(enemies.countActive(true) == 0) {
+        currentlevel += 1;
         bullet.disableBody(true, true);
-        reset(currentlevel)
+        reset(currentlevel);
     }
 }
 
@@ -162,11 +249,10 @@ function hitEnemy(bullet, enemy)
         bullet.setVelocityY(-400);
     }else {
         bullet.setVelocityY(400);
-    }
-    
+    }   
 }
 
-function hitBox(bullet, box)
+function hitBox(bullet)
 {
     bullet.setVelocityY(400);
     hit = true;
@@ -175,11 +261,7 @@ function hitBox(bullet, box)
 
 function hitPortal(bullet, portal)
 {
-    bullet.setX(100);
-    bullet.setY(150);
-    bullet.setVelocityY(400);
-    hit = true;
-    direction = -1;
+
 }
 
 function catchRock(bullet, weapon)
@@ -191,3 +273,4 @@ function catchRock(bullet, weapon)
         direction = 1;
     }
 }
+
