@@ -29,8 +29,8 @@ function preload ()
     this.load.image('sling', 'assets/slingshot.png');
     this.load.image('rock', 'assets/rock.png');
     this.load.image('bird', 'assets/Bird.png');
-    this.load.image('box', 'assets/box.png');~
-    this.load.image('portalTeste', 'assets/portal_sprite')
+    this.load.image('box', 'assets/box.png');
+    this.load.image('portalTeste', 'assets/portal_sprite');
     this.load.image('portal-entry', 'assets/portal.png');
     this.load.image('portal-exit', 'assets/portal.png');
 }
