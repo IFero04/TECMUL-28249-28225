@@ -4,6 +4,7 @@ import Shooter from './Shooter.js';
 import Projectile from './Projectile.js';
 import Box from'./Box.js';
 import Spark from './Spark.js';
+import Portal from './Portal.js';
 
 // GAME CONFIG //
 var config = {
@@ -14,7 +15,7 @@ var config = {
         default: 'arcade',
         arcade: {
             gravity: { y: 0},
-            debug: false
+            debug: true
         }
     },
     scene: {
@@ -40,10 +41,11 @@ var projectile;
 var enemies;
 var blocks;
 var deadly;
+var portals;
 var powerlines;
 var speed;
 
-var currentlevel = 0;
+var currentlevel = 99;
 var textLevel;
 var textShots;
 
@@ -58,13 +60,13 @@ function preload ()
     this.load.image('cable', 'assets/cable.png');
     this.load.image('box', 'assets/box.png');
     this.load.image('spark', 'assets/spark_front.png');
+    this.load.image('portal', 'assets/portal.png');
 }
 
 function create ()
 {
     // GUARDAR A CENA
     scene = this;
-    console.log(scene);
     // BACKGROUND //
     this.add.image(320,240, 'sky');
     this.add.image(320,240, 'poles');
@@ -93,11 +95,15 @@ function create ()
     // SPARKS //
     deadly = this.physics.add.group();
 
+    // Portals //
+    portals = this.physics.add.group();
+
     // PHYSICS //
     this.physics.add.collider(projectile, enemies, hitEnemy);
     this.physics.add.collider(projectile, blocks, hitBlock);
     this.physics.add.collider(projectile, shooter, catchProjectile);
     this.physics.add.collider(projectile, deadly, hitDeath);
+    this.physics.add.collider(projectile, portals, teleport);
 
     // UI //
     textLevel = this.add.text(25, 445, 'Level: 1', { fontSize: '24px', fill: '#FF0000' });
@@ -242,6 +248,8 @@ function loadLevel(level)
         enemies.add(new Bird(scene, 320, 100 - 24, 'bird', false, 1, 230, 100));
         enemies.add(new Bird(scene, 320, 200 - 24, 'bird', true, -1, 230, 100));
         blocks.add(new Box(scene, 220, 300,'box', -1));
+        portals.add(new Portal(scene,120, 100, 'portal',1,320,300-30));
+        portals.add(new Portal(scene,320, 300,'portal',-1,120,100+30));
     }
 }
 
@@ -292,4 +300,11 @@ function catchProjectile(projectile, shooter)
 function hitDeath()
 {
     reset(currentlevel);
+}
+
+function teleport(projectile, portal)
+{
+    projectile.x = portal.teleportX;
+    projectile.y = portal.teleportY;
+    projectile.direction = portal.direction;
 }
