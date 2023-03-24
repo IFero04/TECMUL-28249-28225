@@ -1,3 +1,10 @@
+// IMPORTS //
+import Bird from './Bird.js';
+import Shooter from './Shooter.js';
+import Projectile from './Projectile.js';
+import Box from'./Box.js';
+import Spark from './Spark.js';
+
 // GAME CONFIG //
 var config = {
     type: Phaser.AUTO,
@@ -7,7 +14,7 @@ var config = {
         default: 'arcade',
         arcade: {
             gravity: { y: 0},
-            debug: true
+            debug: false
         }
     },
     scene: {
@@ -17,10 +24,29 @@ var config = {
     }
 };
 
+// GAME SETUP //
 var game = new Phaser.Game(config);
+var scene;
 
+// KEYS //
+var aKey;
+var dKey;
+var tKey;
+var cursors;
 
-// LOAD CONTENT //
+// VARIABLES GAME //
+var shooter;
+var projectile;
+var enemies;
+var blocks;
+var deadly;
+var powerlines;
+var speed;
+
+var currentlevel = 0;
+var textLevel;
+var textShots;
+
 function preload ()
 {
     this.load.image('sky', 'assets/background.png');
@@ -29,207 +55,211 @@ function preload ()
     this.load.image('sling', 'assets/slingshot.png');
     this.load.image('rock', 'assets/rock.png');
     this.load.image('bird', 'assets/Bird.png');
+    this.load.image('cable', 'assets/cable.png');
     this.load.image('box', 'assets/box.png');
-    this.load.image('portalTeste', 'assets/portal_sprite');
-    this.load.image('portal-entry', 'assets/portal.png');
-    this.load.image('portal-exit', 'assets/portal.png');
+    this.load.image('spark', 'assets/spark_front.png');
 }
 
-
-// VARIABLES //
-var currentlevel = 99;
-var textLevel;
-var shots = 0;
-var textShots;
-
-var weapon;
-var cursors;
-var speed;
-var bullet;
-
-var enemies;
-var blocks;
-var portals;
-var sparks;
-var hit = false;
-var direction = 1;
-
-
-// CREATE //
 function create ()
 {
-    // Teste //
-    var combo = this.input.keyboard.createCombo([ 38, 38, 40, 40, 37, 39, 37, 39, 'B', 'A', 'B', 'A' ], { resetOnMatch: true });
-    this.input.keyboard.on('keycombomatch', function (event) {
-        
-        console.log('Konami Code entered!');
-    });
-
+    // GUARDAR A CENA
+    scene = this;
+    console.log(scene);
     // BACKGROUND //
     this.add.image(320,240, 'sky');
     this.add.image(320,240, 'poles');
     this.add.image(320,240, 'ground');
+    powerlines = this.physics.add.staticGroup();
+
+    // MOVEMENT //
+    cursors = this.input.keyboard.createCursorKeys();
+    aKey = this.input.keyboard.addKey('A');
+    dKey = this.input.keyboard.addKey('D');
+    speed = Phaser.Math.GetSpeed(120, 1);
 
     // PLAYER //
-    weapon = this.physics.add.image(320, 450, 'sling');
-    weapon.setCollideWorldBounds(true);
-    cursors = this.input.keyboard.createCursorKeys();
-    speed = Phaser.Math.GetSpeed(300, 1);
-
+    shooter = new Shooter(this,320, 435, 'sling');
+    shooter.body.setCollideWorldBounds(true);
+    
     // BULLET //
-    bullet = this.physics.add.image(weapon.x, weapon.y -28, 'rock');
-    bullet.setVisible(true);
-    bullet.setActive(false);
+    projectile = new Projectile(this,shooter.x,shooter.y - 28, 'rock', 300);
 
-    // ENEMIES //
+    // BIRDS //
     enemies = this.physics.add.group();
 
-    // OBSTACLE
-    blocks = this.physics.add.staticGroup();
+    // BOXS //
+    blocks = this.physics.add.group();
 
-    // PORTALS //
-    portals = this.physics.add.group();
+    // SPARKS //
+    deadly = this.physics.add.group();
 
-    // DEADLY // 
-    sparks = this.physics.add.group();
+    // PHYSICS //
+    this.physics.add.collider(projectile, enemies, hitEnemy);
+    this.physics.add.collider(projectile, blocks, hitBlock);
+    this.physics.add.collider(projectile, shooter, catchProjectile);
+    this.physics.add.collider(projectile, deadly, hitDeath);
 
-    // PHYSICS
-    this.physics.add.collider(bullet, enemies, hitEnemy);
-    this.physics.add.collider(bullet, blocks, hitBox);
-    this.physics.add.collider(bullet, portals, hitPortal);
-    this.physics.add.collider(bullet, weapon, catchRock);
-    this.physics.add.collider(bullet, sparks, killBullet);
-    
-    // UI
+    // UI //
     textLevel = this.add.text(25, 445, 'Level: 1', { fontSize: '24px', fill: '#FF0000' });
     textShots = this.add.text(510, 445, 'Shots: 0', { fontSize: '24px', fill: '#FF0000' });
 
     // START GAME //
     loadLevel(currentlevel);
+    
+    // Teste //
+    tKey = this.input.keyboard.addKey('T');
 }
 
-
-// UPDATE //
-function update (time, delta)
+function update (time, delta) 
 {
-    // PLAYER MOVEMENT
-    if (cursors.left.isDown)
-    {
-        weapon.x -= speed * delta;
-        if(bullet.visible && bullet.active == false) {
-            bullet.x = weapon.x;
-        }
-    }
-    else if (cursors.right.isDown)
-    {
-        weapon.x += speed * delta;
-        if(bullet.visible && bullet.active == false) {
-            bullet.x = weapon.x;
-        }
-    }
+    // UPDATE CLASSES //
+    projectile.update(time, delta);
+    enemies.getChildren().forEach(function(enemy) {
+        enemy.update(time, delta);
+    });
+    deadly.getChildren().forEach(function(dead) {
+        dead.update(time, delta);
+    });
 
-    // FIRE BULLET
-    if (Phaser.Input.Keyboard.JustDown(cursors.space) && bullet.active == false)
-    {
-        hit = false
-        shots += 1;
-        textShots.setText('Shots: ' + shots);
-        bullet.enableBody(true, weapon.x, weapon.y-28, true, true);
-        bullet.setVelocityY(-400);
-    }
-
-    // Check if bullet is out of bounds
+    // CHECK CONDITIONS //
     checkBulletOutOfBounds();
+    checkVictory()
+    
+    // PLAYER MOVEMENT //
+    if (cursors.left.isDown || aKey.isDown)
+    {
+        shooter.x -= speed * delta;
+        if(shooter.hasBullet == true) {
+            projectile.x = shooter.x;
+        }
+    }
+    else if (cursors.right.isDown || dKey.isDown)
+    {
+        shooter.x += speed * delta;
+        if(shooter.hasBullet == true) {
+            projectile.x = shooter.x;
+        }
+    }
 
-    // Check Victory
-    checkVictory();
+    // FIRE BULLET //
+    if (Phaser.Input.Keyboard.JustDown(cursors.space) && shooter.hasBullet == true)
+    {
+        projectile.fire();
+        shooter.hasBullet = false;
+        textShots.setText('Shots: ' + projectile.shoots);
+    }
+    
+    // KEYS //
+    if (tKey.isDown) {
+        currentlevel += 1;
+        reset(currentlevel);
+    }
 
-    // Animation
-
-   
 }
 
 function loadLevel(level)
 {
     textLevel.setText('Level: ' + level);
     if (level == 1) {
-        enemies.create(320, 100, 'bird');
-        enemies.create(320, 200, 'bird');
+        powerlines.create(320, 100, 'cable').setScale(2);
+        enemies.add(new Bird(scene, 320, 100 - 24, 'bird', false));
+        powerlines.create(320, 200, 'cable').setScale(2);
+        enemies.add(new Bird(scene, 320, 200 - 24, 'bird', false));
     }
 
     if (level == 2) {
-        enemies.create(220, 150, 'bird');
-        
+        powerlines.create(320, 100, 'cable').setScale(2);
+        enemies.add(new Bird(scene, 120, 100 - 24, 'bird', true, 1, 400, 70));
+        powerlines.create(320, 200, 'cable').setScale(2);
+        enemies.add(new Bird(scene, 470, 200 - 24, 'bird', false));
     }
 
     if (level == 3) {
-        enemies.create(220, 150, 'bird');
+        powerlines.create(320, 100, 'cable').setScale(2);
+        enemies.add(new Bird(scene, 220, 100 - 24, 'bird', true, 1, 200, 70));
+        powerlines.create(320, 250, 'cable').setScale(2);
+        enemies.add(new Bird(scene, 420, 250 - 24, 'bird', true, -1, 200, 70));
     }
 
     if (level == 4) {
-        enemies.create(220, 100, 'bird');
-        blocks.create(420,100,'box');
-        enemies.create(420, 200, 'bird');
-        
+        powerlines.create(320, 100, 'cable').setScale(2);
+        enemies.add(new Bird(scene, 220, 100 - 24, 'bird', false));
+        blocks.add(new Box(scene,420, 100, 'box', -1));
+        powerlines.create(320, 250, 'cable').setScale(2);
+        enemies.add(new Bird(scene, 420, 250 - 24, 'bird', false));  
     }
 
     if (level == 5) {
-        blocks.create(140, 100, 'box');
-        enemies.create(140, 200, 'bird');
-        enemies.create(140, 300, 'bird');
+        powerlines.create(320, 100, 'cable').setScale(2);
+        powerlines.create(320, 200, 'cable').setScale(2);
+        powerlines.create(320, 300, 'cable').setScale(2);
 
-        enemies.create(320, 200, 'bird');
-        enemies.create(320, 300, 'bird');
-        
-        blocks.create(500,100,'box');
-        enemies.create(500, 200, 'bird');
-        enemies.create(500, 300, 'bird');
+        blocks.add(new Box(scene,120, 100, 'box', -1));
+        enemies.add(new Bird(scene, 70, 200 - 24, 'bird', true, 1, 100, 70)); 
+        enemies.add(new Bird(scene, 170, 300 - 24, 'bird', true, -1, 100, 70)); 
+
+        enemies.add(new Bird(scene, 270, 200 - 24, 'bird', true, 1, 100, 70)); 
+        enemies.add(new Bird(scene, 370, 300 - 24, 'bird', true, -1, 100, 70)); 
+
+        blocks.add(new Box(scene,520, 100, 'box', -1));
+        enemies.add(new Bird(scene, 470, 200 - 24, 'bird', true, 1, 100, 70)); 
+        enemies.add(new Bird(scene, 570, 300 - 24, 'bird', true, -1, 100, 70)); 
+    }
+
+    if (level == 6) {
+        powerlines.create(320, 150, 'cable').setScale(2);
+        powerlines.create(320, 250, 'cable').setScale(2);
+
+        enemies.add(new Bird(scene, 320, 150 - 24, 'bird', false));
+        deadly.add(new Spark(scene, 270, 250, 'spark', true, 1, 114, 50))
+    }
+
+    if (level == 7) {
+        powerlines.create(320, 150, 'cable').setScale(2);
+        powerlines.create(320, 250, 'cable').setScale(2);
+
+        enemies.add(new Bird(scene, 270, 150 - 24, 'bird', true, 1, 114, 50));
+        deadly.add(new Spark(scene, 242, 250, 'spark', true, 1, 114, 50))
+        deadly.add(new Spark(scene, 320, 250, 'spark', true, 1, 114, 50))
+    }
+
+    if (level == 8) {
+        powerlines.create(320, 100, 'cable').setScale(2);
+        powerlines.create(320, 275, 'cable').setScale(2);
+        powerlines.create(320, 300, 'cable').setScale(2);
+
+        blocks.add(new Box(scene,320, 100, 'box', -1));
+        enemies.add(new Bird(scene, 70, 275 - 24, 'bird', true, 1, 477, 90));
+        deadly.add(new Spark(scene, 49, 300, 'spark', true, 1, 477, 90))
+        deadly.add(new Spark(scene, 77, 300, 'spark', true, 1, 477, 90))
+        deadly.add(new Spark(scene, 21, 300, 'spark', true, 1, 477, 90))
+        deadly.add(new Spark(scene, 105, 300, 'spark', true, 1, 477, 90)) 
     }
 
     // Teste Level
     if (level >= 99) {
-        blocks.create(140, 100, 'box');
-        enemies.create(140, 200, 'bird');
-        
-        enemies.create(140, 300, 'bird');
-       
-        enemies.create(320, 100, 'bird');
-        portals.create(320,200, 'portal-exit')
-        portals.create(320,300, 'portal-entry')
-
-        sparks.create(500,100);
-        enemies.create(500, 200, 'bird');
-        enemies.create(500, 300, 'bird');
-
+        textLevel.setText('Teste Level: ' + level);
+        enemies.add(new Bird(scene, 320, 100 - 24, 'bird', false, 1, 230, 100));
+        enemies.add(new Bird(scene, 320, 200 - 24, 'bird', true, -1, 230, 100));
+        blocks.add(new Box(scene, 220, 300,'box', -1));
     }
-
-    
 }
 
-function reset(level)
-{   
-    enemies.clear(true,true);
-    blocks.clear(true, true);
-    portals.clear(true, true);
-    sparks.clear(true,true);
-    loadLevel(level);
-    bullet.setVisible(true);
-    bullet.setX(weapon.x);
-    bullet.setY(weapon.y -28);
-    direction = 1;
-    hit = false;
-}
-
-function killBullet()
+function reset(level) 
 {
-    bullet.disableBody(true, true);
-    reset(currentlevel);
+    powerlines.clear(true,true);
+    enemies.clear(true, true);
+    blocks.clear(true, true);
+    deadly.clear(true, true);
+    loadLevel(level);
+    shooter.reset();
+    projectile.reset();
 }
 
 function checkBulletOutOfBounds()
 {
-    if(bullet.y < -50 || bullet.y > game.config.height + 50) {
-        killBullet();
+    if(projectile.y < -50 || projectile.y > game.config.height + 50) {
+        reset(currentlevel);
     }
 }
 
@@ -237,40 +267,29 @@ function checkVictory()
 {
     if(enemies.countActive(true) == 0) {
         currentlevel += 1;
-        bullet.disableBody(true, true);
         reset(currentlevel);
     }
 }
 
-function hitEnemy(bullet, enemy) 
+function hitEnemy(projectile, enemy)
 {
-    enemy.disableBody(true, true);
-    if(direction == 1) {
-        bullet.setVelocityY(-400);
-    }else {
-        bullet.setVelocityY(400);
-    }   
+    enemy.kill();
 }
 
-function hitBox(bullet)
+function hitBlock(projectile, block)
 {
-    bullet.setVelocityY(400);
-    hit = true;
-    direction = -1;
+    projectile.direction = block.bounce;
 }
 
-function hitPortal(bullet, portal)
+function catchProjectile(projectile, shooter)
 {
-
-}
-
-function catchRock(bullet, weapon)
-{
-    if(hit) {
-        bullet.setActive(false);
-        bullet.setX(weapon.x);
-        bullet.setY(weapon.y -28);
-        direction = 1;
+    if(projectile.direction == -1) {
+        projectile.catch(shooter.x, shooter.y -28);
+        shooter.hasBullet = true;
     }
 }
 
+function hitDeath()
+{
+    reset(currentlevel);
+}

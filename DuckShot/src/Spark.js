@@ -1,4 +1,4 @@
-export default class Bird extends Phaser.GameObjects.Sprite {
+export default class Spark extends Phaser.GameObjects.Sprite {
     constructor(scene, x, y, texture, canMove = true, direction = 1, distance = 0, speed = 0) {
         super(scene, x, y, texture);
   
@@ -45,9 +45,5 @@ export default class Bird extends Phaser.GameObjects.Sprite {
                 }
             }
         }
-    }
-
-    kill() {
-        this.destroy();
     }
 }
