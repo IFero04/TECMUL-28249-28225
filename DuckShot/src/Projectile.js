@@ -36,7 +36,15 @@ export default class Projectile extends Phaser.GameObjects.Image {
     reset() {
         this.direction = 1;
         this.setActive(false);
+        this.setVisible(true);
         this.x = this.startX;
         this.y = this.startY;
+    }
+
+    kill() {
+        this.setActive(false);
+        this.setVisible(false);
+        this.x = 0;
+        this.y = 0;
     }
 }
