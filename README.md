@@ -7,7 +7,6 @@
 - Animar Bird. [4]
 - Animar HitKill. [1]
 - Melhorar os cabos de rede. [2]
-- Melhorar a UI. [2]
 - Fazer levels com portais. [3]
 - Fazer mais levels [1]
 - Adiconar LoadScreen. [1]

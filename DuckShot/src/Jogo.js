@@ -52,7 +52,7 @@ var portals;
 var powerlines;
 var speed;
 
-var currentlevel = 99;
+var currentlevel = 1;
 var timeWin = true;
 var timeLose = true;
 var textLevel;
@@ -72,10 +72,12 @@ var failSound;
 
 
 function preload ()
-{
+{   
     this.load.image('sky', 'assets/image/background.png');
     this.load.image('ground', 'assets/image/grass.png');
     this.load.image('poles', 'assets/image/poles.png');
+    this.load.image('level', 'assets/image/levelBorder.png');
+    this.load.image('shots', 'assets/image/shotsBorder.png');
     this.load.image('sling', 'assets/image/slingshot.png');
     this.load.image('weapon', 'assets/image/weapon.png');
     this.load.image('rock', 'assets/image/rock.png');
@@ -89,7 +91,7 @@ function preload ()
     this.load.image('mute', 'assets/image/mute.png');
     this.load.image('unmute', 'assets/image/unmute.png');
 
-    this.load.audio('music', ['assets/audio/musicR.mp3' , 'assets/audio/musicR.ogg']);
+    this.load.audio('music', ['assets/audio/music.mp3' , 'assets/audio/music.ogg']);
     this.load.audio('musicR', ['assets/audio/musicR.mp3' , 'assets/audio/musicR.ogg']);
     this.load.audio('som-sling', ['assets/audio/slingshot.mp3' , 'assets/audio/slingshot.ogg']);
     this.load.audio('som-box', ['assets/audio/box.mp3' , 'assets/audio/box.ogg']);
@@ -122,7 +124,6 @@ function create ()
     this.add.image(320,240, 'sky');
     this.add.image(320,240, 'poles');
     this.add.image(320,240, 'ground');
-    mute = new MuteButton(this, 75, 25, 'unmute', 'mute');
     powerlines = this.physics.add.staticGroup();
 
     // MOVEMENT //
@@ -161,8 +162,11 @@ function create ()
     this.physics.add.collider(projectile, portals, teleport);
 
     // UI //
-    textLevel = this.add.text(25, 445, 'Level: 1', { fontSize: '24px', fill: '#FF0000' });
-    textShots = this.add.text(510, 445, 'Shots: 0', { fontSize: '24px', fill: '#FF0000' });
+    mute = new MuteButton(this, 75, 25, 'unmute', 'mute');
+    this.add.image(75,457, 'shots');
+    textShots = this.add.text(23, 445, 'SHOTS: 000', {fontFamily: 'serif', fontSize: '20px', fill: '#' });
+    this.add.image(565,457, 'level');
+    textLevel = this.add.text(510, 445, 'LEVEL: 1/10', {fontFamily: 'serif', fontSize: '20px', fill: '#' });
 
     // START GAME //
     loadLevel(currentlevel);
@@ -234,7 +238,7 @@ function update (time, delta)
         projectile.fire();
         shooter.hasBullet = false;
         shooter.canShoot = false;
-        textShots.setText('Shots: ' + projectile.shoots);
+        textShots.setText('SHOTS: ' + projectile.shoots.toString().padStart(3, '0'));
         shooterSound.play();
     }
     
@@ -286,7 +290,7 @@ function update (time, delta)
 
 function loadLevel(level)
 {
-    textLevel.setText('Level: ' + level);
+    textLevel.setText('LEVEL: ' + level + '/10');
     if (level == 1) {
         powerlines.create(320, 100, 'cable').setScale(2);
         enemies.add(new Bird(scene, 320, 100 - 24, enemeyTexture, false));
@@ -363,9 +367,12 @@ function loadLevel(level)
         deadly.add(new Spark(scene, 105, 300, 'spark', true, 1, 477, 90)) 
     }
 
+    if(level == 10) {
+        textLevel.x = 505;
+    }
     // Teste Level
     if (level >= 99) {
-        textLevel.setText('Teste Level: ' + level);
+        //textLevel.setText('Teste Level: ' + level);
         enemies.add(new Bird(scene, 320, 100 - 24, enemeyTexture, false, 1, 230, 100));
         enemies.add(new Bird(scene, 320, 200 - 24, enemeyTexture, true, -1, 230, 100));
         deadly.add(new Spark(scene, 220, 300,'spark', false));
