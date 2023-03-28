@@ -6,14 +6,14 @@ export default class Spark extends Phaser.GameObjects.Sprite {
   
         scene.physics.world.enable(this);
 
-        // Adicione a animação do pássaro aqui, se desejado
-        // Exemplo:
-        // this.anims.create({
-        //   key: 'flap',
-        //   frames: this.anims.generateFrameNumbers('bird', { start: 0, end: 2 }),
-        //   frameRate: 10,
-        //   repeat: -1
-        // });
+        // Animação
+        scene.anims.create({
+            key: 'animationS',
+            frames: scene.anims.generateFrameNumbers(texture, { start: 0, end: 5 }),
+            frameRate: 3,
+            repeat: -1
+        });
+        this.play('animationS');
 
         // Definir as variáveis
         this.canMove = canMove;

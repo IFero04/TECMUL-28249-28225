@@ -6,14 +6,21 @@ export default class Bird extends Phaser.GameObjects.Sprite {
   
         scene.physics.world.enable(this);
 
-        // Adicione a animação do pássaro aqui, se desejado
-        // Exemplo:
-        // this.anims.create({
-        //   key: 'flap',
-        //   frames: this.anims.generateFrameNumbers('bird', { start: 0, end: 2 }),
-        //   frameRate: 10,
-        //   repeat: -1
-        // });
+        if(canMove) {
+            // Animação
+           scene.anims.create({
+               key: 'animationBL',
+               frames: scene.anims.generateFrameNumbers(texture, { start: 0, end: 0 }),
+               frameRate: 0,
+               repeat: -1
+           });
+           scene.anims.create({
+               key: 'animationBR',
+               frames: scene.anims.generateFrameNumbers(texture, { start: 1, end: 1 }),
+               frameRate: 0,
+               repeat: -1
+           });
+       }
 
         // Definir as variáveis
         this.canMove = canMove;
@@ -27,8 +34,17 @@ export default class Bird extends Phaser.GameObjects.Sprite {
     update(time, delta) {
 
         if(this.canMove) {
+            // Animation
+            if(this.direction ==1) {
+                this.play('animationBR');
+            }else {
+                this.play('animationBL');
+            }
+
+            //Movement
             this.x += this.speed * this.direction * delta;
 
+            //Management Direction
             if(this.initalDirection == 1) {
                 if(this.direction == 1 && this.x >= this.startX + this.distance) {
                     this.direction = -1;

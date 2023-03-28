@@ -16,7 +16,7 @@ var config = {
         default: 'arcade',
         arcade: {
             gravity: { y: 0},
-            debug: false
+            debug: true
         }
     },
     scene: {
@@ -46,13 +46,14 @@ var shooter;
 var projectile;
 var enemies;
 var enemeyTexture;
+var enemeyAnimation;
 var blocks;
 var deadly;
 var portals;
 var powerlines;
 var speed;
 
-var currentlevel = 1;
+var currentlevel = 99;
 var timeWin = true;
 var timeLose = true;
 var textLevel;
@@ -82,16 +83,18 @@ function preload ()
     this.load.image('weapon', 'assets/image/weapon.png');
     this.load.image('rock', 'assets/image/rock.png');
     this.load.image('bullet', 'assets/image/bullet.png');
-    this.load.image('bird', 'assets/image/Bird.png');
+    this.load.image('bird', 'assets/image/bird.png');
+    this.load.spritesheet('birdM', 'assets/image/birdSprite.png', {frameWidth:46, frameHeight:58, endFrame: 1});
     this.load.image('birdR', 'assets/image/BirdR.png');
+    this.load.spritesheet('birdMR', 'assets/image/birdSpriteR.png', {frameWidth:46, frameHeight:58, endFrame: 1});
     this.load.image('cable', 'assets/image/cable.png');
     this.load.image('box', 'assets/image/box.png');
-    this.load.image('spark', 'assets/image/spark_front.png');
-    this.load.image('portal', 'assets/image/portal.png');
+    this.load.spritesheet('spark', 'assets/image/sparkSprite.png', {frameWidth:32, frameHeight:32, endFrame: 5});
+    this.load.spritesheet('portal', 'assets/image/portalSprite.png', {frameWidth:64, frameHeight:42, endFrame: 3});
     this.load.image('mute', 'assets/image/mute.png');
     this.load.image('unmute', 'assets/image/unmute.png');
 
-    this.load.audio('music', ['assets/audio/music.mp3' , 'assets/audio/music.ogg']);
+    this.load.audio('music', ['assets/audio/musicR.mp3' , 'assets/audio/musicR.ogg']);
     this.load.audio('musicR', ['assets/audio/musicR.mp3' , 'assets/audio/musicR.ogg']);
     this.load.audio('som-sling', ['assets/audio/slingshot.mp3' , 'assets/audio/slingshot.ogg']);
     this.load.audio('som-box', ['assets/audio/box.mp3' , 'assets/audio/box.ogg']);
@@ -144,6 +147,7 @@ function create ()
     // BIRDS //
     enemies = this.physics.add.group();
     enemeyTexture = 'bird';
+    enemeyAnimation = 'birdM';
 
     // BOXS //
     blocks = this.physics.add.group();
@@ -265,8 +269,13 @@ function update (time, delta)
                 music.play();
                 killSound = this.sound.add('som-killR');
                 enemeyTexture = 'birdR';
+                enemeyAnimation = 'birdMR';
                 enemies.getChildren().forEach(function(enemy) {
-                    enemy.setTexture(enemeyTexture);
+                    if(enemy.canMove) {
+                        enemy.setTexture(enemeyAnimation);
+                    } else {
+                        enemy.setTexture(enemeyTexture);
+                    }
                 });
                 
             } else {
@@ -275,8 +284,13 @@ function update (time, delta)
                 music.play();
                 killSound = this.sound.add('som-kill');
                 enemeyTexture = 'bird';
+                enemeyAnimation = 'birdM';
                 enemies.getChildren().forEach(function(enemy) {
-                    enemy.setTexture(enemeyTexture);
+                    if(enemy.canMove) {
+                        enemy.setTexture(enemeyAnimation);
+                    } else {
+                        enemy.setTexture(enemeyTexture);
+                    }
                 });
             }
         }, 300);
@@ -300,16 +314,16 @@ function loadLevel(level)
 
     if (level == 2) {
         powerlines.create(320, 100, 'cable').setScale(2);
-        enemies.add(new Bird(scene, 120, 100 - 24, enemeyTexture, true, 1, 400, 70));
+        enemies.add(new Bird(scene, 120, 100 - 24, enemeyAnimation, true, 1, 400, 70));
         powerlines.create(320, 200, 'cable').setScale(2);
         enemies.add(new Bird(scene, 470, 200 - 24, enemeyTexture, false));
     }
 
     if (level == 3) {
         powerlines.create(320, 100, 'cable').setScale(2);
-        enemies.add(new Bird(scene, 220, 100 - 24, enemeyTexture, true, 1, 200, 70));
+        enemies.add(new Bird(scene, 220, 100 - 24, enemeyAnimation, true, 1, 200, 70));
         powerlines.create(320, 250, 'cable').setScale(2);
-        enemies.add(new Bird(scene, 420, 250 - 24, enemeyTexture, true, -1, 200, 70));
+        enemies.add(new Bird(scene, 420, 250 - 24, enemeyAnimation, true, -1, 200, 70));
     }
 
     if (level == 4) {
@@ -326,15 +340,15 @@ function loadLevel(level)
         powerlines.create(320, 300, 'cable').setScale(2);
 
         blocks.add(new Box(scene,120, 100, 'box', -1));
-        enemies.add(new Bird(scene, 70, 200 - 24, enemeyTexture, true, 1, 100, 70)); 
-        enemies.add(new Bird(scene, 170, 300 - 24, enemeyTexture, true, -1, 100, 70)); 
+        enemies.add(new Bird(scene, 70, 200 - 24, enemeyAnimation, true, 1, 100, 70)); 
+        enemies.add(new Bird(scene, 170, 300 - 24, enemeyAnimation, true, -1, 100, 70)); 
 
-        enemies.add(new Bird(scene, 270, 200 - 24, enemeyTexture, true, 1, 100, 70)); 
-        enemies.add(new Bird(scene, 370, 300 - 24, enemeyTexture, true, -1, 100, 70)); 
+        enemies.add(new Bird(scene, 270, 200 - 24, enemeyAnimation, true, 1, 100, 70)); 
+        enemies.add(new Bird(scene, 370, 300 - 24, enemeyAnimation, true, -1, 100, 70)); 
 
         blocks.add(new Box(scene,520, 100, 'box', -1));
-        enemies.add(new Bird(scene, 470, 200 - 24, enemeyTexture, true, 1, 100, 70)); 
-        enemies.add(new Bird(scene, 570, 300 - 24, enemeyTexture, true, -1, 100, 70)); 
+        enemies.add(new Bird(scene, 470, 200 - 24, enemeyAnimation, true, 1, 100, 70)); 
+        enemies.add(new Bird(scene, 570, 300 - 24, enemeyAnimation, true, -1, 100, 70)); 
     }
 
     if (level == 6) {
@@ -349,7 +363,7 @@ function loadLevel(level)
         powerlines.create(320, 150, 'cable').setScale(2);
         powerlines.create(320, 250, 'cable').setScale(2);
 
-        enemies.add(new Bird(scene, 270, 150 - 24, enemeyTexture, true, 1, 114, 50));
+        enemies.add(new Bird(scene, 270, 150 - 24, enemeyAnimation, true, 1, 114, 50));
         deadly.add(new Spark(scene, 242, 250, 'spark', true, 1, 114, 50))
         deadly.add(new Spark(scene, 320, 250, 'spark', true, 1, 114, 50))
     }
@@ -360,21 +374,51 @@ function loadLevel(level)
         powerlines.create(320, 300, 'cable').setScale(2);
 
         blocks.add(new Box(scene,320, 100, 'box', -1));
-        enemies.add(new Bird(scene, 70, 275 - 24, enemeyTexture, true, 1, 477, 90));
+        enemies.add(new Bird(scene, 70, 275 - 24, enemeyAnimation, true, 1, 477, 90));
         deadly.add(new Spark(scene, 49, 300, 'spark', true, 1, 477, 90))
         deadly.add(new Spark(scene, 77, 300, 'spark', true, 1, 477, 90))
         deadly.add(new Spark(scene, 21, 300, 'spark', true, 1, 477, 90))
         deadly.add(new Spark(scene, 105, 300, 'spark', true, 1, 477, 90)) 
     }
 
+    if (level == 9) {
+        powerlines.create(320, 100, 'cable').setScale(2);
+        powerlines.create(320, 200, 'cable').setScale(2);
+        powerlines.create(320, 300, 'cable').setScale(2);
+
+        deadly.add(new Spark(scene, 320, 300, 'spark', false))
+        deadly.add(new Spark(scene, 320 - 28, 300, 'spark', false))
+        deadly.add(new Spark(scene, 320 + 28, 300, 'spark', false))
+
+        enemies.add(new Bird(scene, 320, 100 - 24, enemeyTexture, false));
+
+        portals.add(new Portal(scene,120, 100, 'portal',1,320,200-30));
+        portals.add(new Portal(scene,320, 200,'portal',-1,120,100+30));
+    }
+
     if(level == 10) {
         textLevel.x = 505;
+        powerlines.create(320, 100, 'cable').setScale(2);
+        powerlines.create(320, 200, 'cable').setScale(2);
+        powerlines.create(320, 300, 'cable').setScale(2);
+
+        enemies.add(new Bird(scene, 120, 200 - 24, enemeyAnimation, true,1,120,70));
+        portals.add(new Portal(scene,120, 100,'portal',1,320,300-30));
+
+        blocks.add(new Box(scene,320, 100, 'box', -1));
+        enemies.add(new Bird(scene, 320, 200 - 24, enemeyTexture, false));
+        portals.add(new Portal(scene,320, 300,'portal',-1,520,100+30));
+
+        enemies.add(new Bird(scene, 480, 300 - 24, enemeyAnimation, true, 1, 114, 50));
+        deadly.add(new Spark(scene, 442, 200, 'spark', true, 1, 114, 50))
+        deadly.add(new Spark(scene, 520, 200, 'spark', true, 1, 114, 50))
+        portals.add(new Portal(scene,520, 100,'portal',1,320,300-30));
     }
     // Teste Level
     if (level >= 99) {
-        //textLevel.setText('Teste Level: ' + level);
+        textLevel.setText('Teste Level: ' + level);
         enemies.add(new Bird(scene, 320, 100 - 24, enemeyTexture, false, 1, 230, 100));
-        enemies.add(new Bird(scene, 320, 200 - 24, enemeyTexture, true, -1, 230, 100));
+        enemies.add(new Bird(scene, 320, 200 - 24, enemeyAnimation, true, -1, 230, 100));
         deadly.add(new Spark(scene, 220, 300,'spark', false));
         blocks.add(new Box(scene, 520, 100,'box', -1));
         portals.add(new Portal(scene,120, 100, 'portal',1,320,300-30));
@@ -390,6 +434,7 @@ function reset(level)
     enemies.clear(true, true);
     blocks.clear(true, true);
     deadly.clear(true, true);
+    portals.clear(true, true);
     loadLevel(level);
     shooter.reset();
     projectile.reset();
