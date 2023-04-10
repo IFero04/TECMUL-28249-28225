@@ -213,7 +213,7 @@ function create ()
             music.stop();
             music = scene.sound.add('music', { loop: true });
             music.play();
-            killSound = scene.sound.add('som-killR');
+            killSound = scene.sound.add('som-kill');
             enemyTexture = 'bird';
         }
         reset(currentlevel);
